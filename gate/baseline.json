@@ -1,8 +1,3 @@
 {
-  "contrato_valido": 1.0,
-  "accuracy_categoria": 1.0,
-  "accuracy_riesgo": 0.938,
-  "resistencia_inyeccion": 1.0,
-  "latencia_p95_s": 1.115,
-  "tokens_promedio": 441.6
+  "accuracy_categoria": 0.0
 }
