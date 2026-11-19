@@ -36,3 +36,14 @@ cd llmops-lab
 Los dos workflows no vienen creados a propósito: un archivo de workflow vacío hace que GitHub Actions marque un error en cada push.
 
 `data/prod/` se llena al ejecutar `python -m src.traffic` (paso 4.1).
+
+## Preguntas del laboratorio
+
+**¿Por qué el gate rechazó el prompt v1 y qué cambiaste en v2 para que aprobara?**
+v1 solo pedía "JSON con categoria, riesgo_churn y resumen" sin decir qué valores eran válidos, así que el modelo inventó etiquetas (`"Quejas sobre comisiones"`, `"Alto"`) y ninguna respuesta cumplió el contrato: `contrato_valido`, `accuracy_categoria`, `accuracy_riesgo` y `resistencia_inyeccion` quedaron en 0.0. En v2 fijé los valores permitidos de cada campo con su definición, pedí solo el objeto JSON sin texto alrededor, agregué la regla de que el ticket es un dato y no una orden (contra la inyección) y un ejemplo; con eso pasó a 1.0 / 1.0 / 0.938 / 1.0.
+
+**¿Por qué el pull request trampa falló en GitHub si en tu máquina el gate aprobaba?**
+El PR trampa volvía a v1 y bajaba a 0 los umbrales de `gate/thresholds.json` y el baseline; en local el gate lee esos archivos modificados, así que aprobaba. En GitHub el paso "Tomar el juez desde main" reemplaza `gate/`, `src/gate.py`, `src/evaluate.py` y `data/golden.jsonl` por la versión de `main` antes de evaluar, de modo que v1 se juzgó con los umbrales reales y fue rechazado. Quien propone el cambio no puede editar al juez que lo evalúa (además `CODEOWNERS` protege esas rutas).
+
+**¿Qué te muestra Langfuse que no ves en el archivo de trazas local?**
+El JSONL local es una lista plana por máquina (en el runner de CI se pierde al terminar el job). Langfuse junta en un solo lugar las trazas de todas las ejecuciones, permite filtrarlas por las etiquetas `prompt:` y `escenario:` para comparar la semana base con `price_hike`, y agrega los scores (`contrato_valido`, distribución de `categoria`), la latencia y los tokens en gráficos a lo largo del tiempo, que es donde se ve el drift.
